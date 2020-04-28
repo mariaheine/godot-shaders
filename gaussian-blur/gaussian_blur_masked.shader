@@ -1,4 +1,7 @@
-// Not optimized
+// Its just a godot reimplementation of a gaussian blur shader by mrharicot at 
+// shadertoy: https://www.shadertoy.com/view/XdfGDH 
+
+// Same blur bur with verical mask
 
 shader_type canvas_item;
 
@@ -38,6 +41,7 @@ void fragment() {
 	{
 		for (int j=-kSize; j <= kSize; ++j)
 		{
+			// replace with TEXTURE_PIXEL_SIZE if you want to blur a specific texture
 			vec2 sampledOffset = vec2(float(i), float(j)) * SCREEN_PIXEL_SIZE;
 			float sampleWeight = kernel[kSize+j]*kernel[kSize+i];
 			final_color += sampleWeight*texture(SCREEN_TEXTURE, SCREEN_UV+sampledOffset).rgb;
@@ -46,5 +50,18 @@ void fragment() {
 	
 	final_color = final_color/(Z*Z);
 	
-	COLOR = vec4(final_color, 1.0);
+	// Apply mask
+	float mask = smoothstep(blur_distance, 0.5, UV.x) - smoothstep(0.5, 1.0 - blur_distance, UV.x);
+	mask = 1.0 - mask;
+	
+	if (showMask)
+	{
+		COLOR = vec4(mask);
+	}
+	else
+	{
+		COLOR = texture(SCREEN_TEXTURE, SCREEN_UV) * (1.0 - mask) + vec4(final_color, 1.0) * mask;
+	}
+	
+//	COLOR = vec4(1) * mask;
 }
